@@ -1,9 +1,10 @@
 all : kml_dist
 
 GPP=g++
+GCC=gcc
 
 kml_dist : kml_dist.c
-	$(GPP) -g -Wall -o kml_dist \
+	$(GCC) -g -Wall -o kml_dist \
                  kml_dist.c
 clean:
 	-@rm kml_dist              >/dev/null 2>/dev/null
