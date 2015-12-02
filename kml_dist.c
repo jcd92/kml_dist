@@ -3,19 +3,33 @@
 #include <strings.h>
 #include <ctype.h>
 
+enum Chartype
+{
+   EOF,
+   ASCII
+};
+
+enum Chartype
+{
+   Start,
+   End,
+   Comment,
+   Text
+};
 
 struct character {
   char cargo;
-  char type[8];
+  Chartype type;
 };
 
 struct token {
   char cargo[256];
-  char type[8];
+  Tokentype type;
 };
 
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
+
 
 main (int argc, char *argv[])
 {
@@ -72,10 +86,14 @@ struct token tokenizer(FILE *source)
       //printf("Non w/s character: %c\n", c.cargo);
 
       if (c.cargo == '<') {
+        // An xml node will have a name, and a possibly a list of attr="value", and a trailing /, 
+        // but kml uses exlicit node ends and no attributes, so I will take some shortcuts.
         n = 0;
         c = scanner(source); // Check if this is a node start or a node end.
-        if (c.cargo == '/'){
+        if (c.cargo == '/') {
           strncpy(t.type, "End", 8);      
+        } else if (c.cargo == '!' || c.cargo == '?' ) {
+          strncpy(t.type, "Comment", 8);
         } else {
           strncpy(t.type, "Start", 8);
           t.cargo[n] = c.cargo;
