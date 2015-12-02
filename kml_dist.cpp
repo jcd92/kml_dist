@@ -36,7 +36,7 @@ struct node
   int num_child;
   int num_sibling;
   node *parent;
-  std::vector<node> *child;
+  std::vector<node*> child;
 };
 
         
@@ -50,10 +50,13 @@ main (int argc, char *argv[])
   struct token t;
   node *root;
   node *currNode;
+  node *newNode;
   root = new node;
-  //root->child = 0;
+  root->name = 0;
   root->num_child = 0;
   root->num_sibling = 0;
+//  std::vector<node*> *children;
+//  root->child = children;
 
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
@@ -66,14 +69,23 @@ main (int argc, char *argv[])
       switch (t.type)
       {
         case Start:
+          /* Need to create a vector of node pointers, and a pointer for the vector to be stored
+          in the node.child element.  Assume first call has empty vector created by parent
+          Every time we get a new node token it should be pushed onto this vector */ 
           printf("Start %s\n", t.cargo);
-          currNode->child.push_back(new node); // Add a new child to the vector
+          newNode = new node;  // newNode points to the new node
+          //children = new std::vector<node*>;
+          newNode->parent = currNode;
+          newNode->name = t.cargo;
+          newNode->data = 0;
+          newNode->num_child = 0;
+          //*children.push_back(newNode);
+          //newNode->child.push_back(children);; // Add a new child to the vector
+          printf("%s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
+          
           currNode->num_child++;
-          currNode->child->parent = currNode;
-          currNode->child->name = t.cargo;
-          currNode->child->data = 0;
-          currNode->child->num_child = 0;
-          currNode = currNode->child;
+          currNode->child.push_back(newNode);
+          currNode = newNode;
           printf("New node %s\n", currNode->name);
           break;
           
@@ -89,6 +101,7 @@ main (int argc, char *argv[])
         case Text:
           printf("Text %s\n", t.cargo);
           currNode->data = t.cargo;
+          printf("%s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
 
           break;
           
@@ -103,7 +116,7 @@ main (int argc, char *argv[])
   // Now dump out the contents of the tree.
   currNode = root;  // should be the case anyway.
   printf("\n\nStructure of xml tree:\n");
-  dumpTree(root->child, 0);
+  dumpTree(root, 0);
   } 
 }
 
@@ -190,13 +203,15 @@ struct token tokenizer(FILE *source)
 void dumpTree(node *dumpNode, int depth)
 {
   int i;
-  std::vector<*node>::const_iterator j;
+  //std::vector<node*>::const_iterator j;
   
   for (i = 0; i < depth; i++)
     printf("  ");
   //printf("%s \n", dumpNode->name);
-  printf("%s %d\n", dumpNode->name, dumpNode->num_child);
-  for (j = dumpNode.begin(); j  != dumpNode.end(); ++j)
-    dumpTree(dumpNode->child, depth + 1);
+  printf("%s %d    %s\n", dumpNode->name, dumpNode->num_child, dumpNode->data);
+  for (std::vector<node*>::iterator j = dumpNode->child.begin(); j != dumpNode->child.end(); ++j)
+    dumpTree(*j, depth + 1);
+    
+    //dumpTree(dumpNode->child[j], depth + 1);
 
 }
