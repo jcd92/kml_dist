@@ -1,29 +1,63 @@
 /* A simple XML parser */
 #include <stdio.h>
 
-char scanner(FILE *source);
+struct character {
+  char cargo;
+  char *type;
+};
+
+struct token {
+  char *cargo;
+  char *type;
+};
+
+struct character scanner(FILE *source);
+struct token tokenizer(FILE *source);
 
 main ()
 {
   FILE *input;
-  char t;
+  struct token t;
   if ((input = fopen("test_old.kml", "r")) == NULL)
     printf("File could not be opened\n");
   else {
-    if ((t = scanner(input)) == "\0" ) {
+    while (1) {
+    t = tokenizer(input);
+    if (t.type == "EOF" ) {
       printf("End of file\n");
       return 0;
     }  else {
-      printf("Character : %c\n", t);
+//      printf("Character : %c\n", t);
+    }
     }
   }
 }
 
-char scanner(FILE *source) 
+struct character scanner(FILE *source) 
 {
-  char c;
+  struct character c;
+  if ((c.cargo = fgetc(source)) == EOF) {
+    c.type = "EOF";
+  } else { 
+    c.type = "ASCII";
+  }
+  return c;
+}
+
+struct token tokenizer(FILE *source)
+{
+  struct token t;
+  struct character c;
   
-  return fgetc(source);
+  while (1) {
+    c = scanner(source);
+    if (c.type == "EOF" ) {
+      t.type = "EOF";
+      return t;
+    } else {
+      printf("Character : %c\n", c.cargo);
+    }
+  }
 }
 
     
