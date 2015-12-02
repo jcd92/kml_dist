@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include <ctype.h>
+#include <vector>
 
 enum Chartype
 {
@@ -34,9 +35,8 @@ struct node
   char *data;
   int num_child;
   int num_sibling;
-  node *child;
   node *parent;
-  node *next;
+  std::vector<node> *child;
 };
 
         
@@ -51,10 +51,9 @@ main (int argc, char *argv[])
   node *root;
   node *currNode;
   root = new node;
-  root->child = 0;
+  //root->child = 0;
   root->num_child = 0;
   root->num_sibling = 0;
-  route->next = 0;
 
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
@@ -68,7 +67,7 @@ main (int argc, char *argv[])
       {
         case Start:
           printf("Start %s\n", t.cargo);
-          currNode->child = new node;
+          currNode->child.push_back(new node); // Add a new child to the vector
           currNode->num_child++;
           currNode->child->parent = currNode;
           currNode->child->name = t.cargo;
@@ -191,16 +190,13 @@ struct token tokenizer(FILE *source)
 void dumpTree(node *dumpNode, int depth)
 {
   int i;
+  std::vector<*node>::const_iterator j;
   
   for (i = 0; i < depth; i++)
     printf("  ");
-
   //printf("%s \n", dumpNode->name);
   printf("%s %d\n", dumpNode->name, dumpNode->num_child);
-
-  if (dumpNode->num_child > 0) {
+  for (j = dumpNode.begin(); j  != dumpNode.end(); ++j)
     dumpTree(dumpNode->child, depth + 1);
-  } else {
-    //dumpTree(dumpNode->child, depth);
-  }
+
 }
