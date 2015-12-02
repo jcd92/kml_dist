@@ -5,16 +5,17 @@
 
 enum Chartype
 {
-   EOF,
+   EndOfFile,
    ASCII
 };
 
-enum Chartype
+enum Tokentype
 {
    Start,
    End,
    Comment,
-   Text
+   Text,
+   EndOfFileToken
 };
 
 struct character {
@@ -40,11 +41,33 @@ main (int argc, char *argv[])
   else {
     while (1) {
     t = tokenizer(input);
-    if (strcmp(t.type, "EOF") == 0) {
+    if (t.type == EndOfFileToken) {
       printf("End of file\n");
       return 0;
     }  else {
-      printf("Token : %8s %s\n", t.type, t.cargo);
+      //printf("Token : %8s %s\n", t.type, t.cargo);
+      switch (t.type)
+      {
+        case Start:
+          printf("Start %s\n", t.cargo);
+          break;
+          
+        case End:
+          printf("End %s\n", t.cargo);
+          break;
+          
+        case Comment:
+          printf("Comment %s\n", t.cargo);
+          break;
+          
+        case Text:
+          printf("Text %s\n", t.cargo);
+          break;
+          
+         default :
+           printf("Unknown token %s!\n", t.cargo);
+           
+       }
     }
     }
   }
@@ -54,11 +77,12 @@ struct character scanner(FILE *source)
 {
   struct character c;
   if ((c.cargo = fgetc(source)) == EOF) {
-    strncpy(c.type, "EOF", 8);
+    //strncpy(c.type, "EOF", 8);
+    c.type = EndOfFile;
     //printf("scanner: EOF\n");
   } else { 
-    strncpy(c.type, "ASCII", 8);
-//    *c.type = "ASCII";
+    //strncpy(c.type, "ASCII", 8);
+    c.type = ASCII;
   }
   return c;
 }
@@ -72,9 +96,9 @@ struct token tokenizer(FILE *source)
   while (1) {
     c = scanner(source);
     //printf("TOK: c.type %s\n", c.type);
-    if (strcmp(c.type, "EOF") == 0) {
+    if (c.type ==  EndOfFile) {
       //printf("Tokeniser: EOF\n");
-      strncpy(t.type, "EOF", 8);
+      t.type = EndOfFileToken;
       return t;
     } else {
       //printf("Character : %c\n", c.cargo);
@@ -91,11 +115,11 @@ struct token tokenizer(FILE *source)
         n = 0;
         c = scanner(source); // Check if this is a node start or a node end.
         if (c.cargo == '/') {
-          strncpy(t.type, "End", 8);      
+          t.type = End;      
         } else if (c.cargo == '!' || c.cargo == '?' ) {
-          strncpy(t.type, "Comment", 8);
+          t.type = Comment;
         } else {
-          strncpy(t.type, "Start", 8);
+          t.type =Start;
           t.cargo[n] = c.cargo;
           n++;      
         }
@@ -110,7 +134,7 @@ struct token tokenizer(FILE *source)
         return t;
       } else if (isprint(c.cargo)){
         n = 0;
-        strncpy(t.type, "Text", 8);
+        t.type = Text;
         //printf("Text\n");
         //t.cargo[0] = c.cargo;
         while (c.cargo !='<') {
