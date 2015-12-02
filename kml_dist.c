@@ -1,6 +1,8 @@
 /* A simple XML parser */
 #include <stdio.h>
 #include <strings.h>
+#include <ctype.h>
+
 
 struct character {
   char cargo;
@@ -62,13 +64,13 @@ struct token tokenizer(FILE *source)
       return t;
     } else {
       //printf("Character : %c\n", c.cargo);
-/*
+
       while (c.cargo == ' ' || c.cargo == '\t' || c.cargo =='\n') {
         //printf("Whitespace : %c\n", c.cargo);
-        c = scanner(source);    /* Ignore whitespaces and tabs */
+        c = scanner(source);    
       }
       //printf("Non w/s character: %c\n", c.cargo);
-*/
+
       if (c.cargo == '<') {
         n = 0;
         c = scanner(source); // Check if this is a node start or a node end.
@@ -88,17 +90,35 @@ struct token tokenizer(FILE *source)
         t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.
         //printf("End token\n");
         return t;
-      } elsif  {
-        printf("Text\n");
-        t.cargo[0] = c.cargo;
-        while (c.cargo != '<') {
-          n++;
-          c = scanner(source);    /*Keep scanning characters until we hit the start of the next node*/
-          printf("Character in text : %c\n", c.cargo);
+      } else if (isdigit(c.cargo) || c.cargo == '-') {
+        n = 0;
+        strncpy(t.type, "Number", 8);
+        //printf("Number\n");
+        while (isdigit(c.cargo) || c.cargo =='-' || c.cargo =='.') {
+          //printf("Digit in number : %c\n", c.cargo);
           t.cargo[n] = c.cargo;
+          n++;
+          c = scanner(source);    /*Keep scanning characters until we hit a non text */
         }
-        t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.        
+        ungetc(c.cargo, source);  // Push the next character back for processing next time
+        t.cargo[n] = '\0';  // Overwrite the > character with the array terminator.        
         return t;
+      } else if (isprint(c.cargo)){
+        n = 0;
+        strncpy(t.type, "Text", 8);
+        //printf("Text\n");
+        //t.cargo[0] = c.cargo;
+        while (c.cargo !='<') {
+          //printf("Character in text : %c\n", c.cargo);
+          t.cargo[n] = c.cargo;
+          n++;
+          c = scanner(source);    /*Keep scanning characters until we hit a non text */
+        }
+        ungetc(c.cargo, source);  // Push the next character back for processing next time
+        t.cargo[n] = '\0';  // Overwrite the > character with the array terminator.        
+        return t;
+      } else {
+        printf("Illegal token start character %c\n", c.cargo);
       }
     }
   }
