@@ -90,19 +90,6 @@ struct token tokenizer(FILE *source)
         t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.
         //printf("End token\n");
         return t;
-      } else if (isdigit(c.cargo) || c.cargo == '-') {
-        n = 0;
-        strncpy(t.type, "Number", 8);
-        //printf("Number\n");
-        while (isdigit(c.cargo) || c.cargo =='-' || c.cargo =='.') {
-          //printf("Digit in number : %c\n", c.cargo);
-          t.cargo[n] = c.cargo;
-          n++;
-          c = scanner(source);    /*Keep scanning characters until we hit a non text */
-        }
-        ungetc(c.cargo, source);  // Push the next character back for processing next time
-        t.cargo[n] = '\0';  // Overwrite the > character with the array terminator.        
-        return t;
       } else if (isprint(c.cargo)){
         n = 0;
         strncpy(t.type, "Text", 8);
