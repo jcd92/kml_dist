@@ -28,32 +28,59 @@ struct token {
   Tokentype type;
 };
 
+struct node
+{
+  char *name;
+  char *data;
+  int num_child;
+  int num_sibling;
+  node *child;
+  node *parent;
+  node *next;
+};
+
+        
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
-
+void dumpTree (node *dumpNode, int depth);
 
 main (int argc, char *argv[])
 {
   FILE *input;
   struct token t;
+  node *root;
+  node *currNode;
+  root = new node;
+  root->child = 0;
+  root->num_child = 0;
+  root->num_sibling = 0;
+  route->next = 0;
+
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
   else {
-    while (1) {
+    currNode = root;
     t = tokenizer(input);
-    if (t.type == EndOfFileToken) {
-      printf("End of file\n");
-      return 0;
-    }  else {
+
+    while (t.type != EndOfFileToken) {
       //printf("Token : %8s %s\n", t.type, t.cargo);
       switch (t.type)
       {
         case Start:
           printf("Start %s\n", t.cargo);
+          currNode->child = new node;
+          currNode->num_child++;
+          currNode->child->parent = currNode;
+          currNode->child->name = t.cargo;
+          currNode->child->data = 0;
+          currNode->child->num_child = 0;
+          currNode = currNode->child;
+          printf("New node %s\n", currNode->name);
           break;
           
         case End:
           printf("End %s\n", t.cargo);
+          currNode = currNode->parent;
           break;
           
         case Comment:
@@ -62,15 +89,23 @@ main (int argc, char *argv[])
           
         case Text:
           printf("Text %s\n", t.cargo);
+          currNode->data = t.cargo;
+
           break;
           
          default :
            printf("Unknown token %s!\n", t.cargo);
            
-       }
+      }
+      t = tokenizer(input);
     }
-    }
-  }
+
+  printf("End of file\n\n");
+  // Now dump out the contents of the tree.
+  currNode = root;  // should be the case anyway.
+  printf("\n\nStructure of xml tree:\n");
+  dumpTree(root->child, 0);
+  } 
 }
 
 struct character scanner(FILE *source) 
@@ -153,4 +188,19 @@ struct token tokenizer(FILE *source)
   }
 }
 
-    
+void dumpTree(node *dumpNode, int depth)
+{
+  int i;
+  
+  for (i = 0; i < depth; i++)
+    printf("  ");
+
+  //printf("%s \n", dumpNode->name);
+  printf("%s %d\n", dumpNode->name, dumpNode->num_child);
+
+  if (dumpNode->num_child > 0) {
+    dumpTree(dumpNode->child, depth + 1);
+  } else {
+    //dumpTree(dumpNode->child, depth);
+  }
+}
