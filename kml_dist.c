@@ -28,7 +28,7 @@ main (int argc, char *argv[])
       printf("End of file\n");
       return 0;
     }  else {
-      printf("Token : %s\n", t.cargo);
+      printf("Token : %8s %s\n", t.type, t.cargo);
     }
     }
   }
@@ -62,13 +62,23 @@ struct token tokenizer(FILE *source)
       return t;
     } else {
       //printf("Character : %c\n", c.cargo);
+/*
       while (c.cargo == ' ' || c.cargo == '\t' || c.cargo =='\n') {
         //printf("Whitespace : %c\n", c.cargo);
         c = scanner(source);    /* Ignore whitespaces and tabs */
       }
       //printf("Non w/s character: %c\n", c.cargo);
+*/
       if (c.cargo == '<') {
         n = 0;
+        c = scanner(source); // Check if this is a node start or a node end.
+        if (c.cargo == '/'){
+          strncpy(t.type, "End", 8);      
+        } else {
+          strncpy(t.type, "Start", 8);
+          t.cargo[n] = c.cargo;
+          n++;      
+        }
         while (c.cargo != '>') {
           c = scanner(source);    /*Keep scanning characters until we hit the end of the token*/
           //printf("Character in token : %c\n", c.cargo);
@@ -78,8 +88,16 @@ struct token tokenizer(FILE *source)
         t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.
         //printf("End token\n");
         return t;
-      } else {
-        printf("Shouldn't be here!\n");
+      } elsif  {
+        printf("Text\n");
+        t.cargo[0] = c.cargo;
+        while (c.cargo != '<') {
+          n++;
+          c = scanner(source);    /*Keep scanning characters until we hit the start of the next node*/
+          printf("Character in text : %c\n", c.cargo);
+          t.cargo[n] = c.cargo;
+        }
+        t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.        
         return t;
       }
     }
