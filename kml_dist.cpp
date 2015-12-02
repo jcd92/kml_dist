@@ -57,7 +57,8 @@ main (int argc, char *argv[])
   root->num_sibling = 0;
 //  std::vector<node*> *children;
 //  root->child = children;
-
+  char *n;
+  
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
   else {
@@ -73,10 +74,13 @@ main (int argc, char *argv[])
           in the node.child element.  Assume first call has empty vector created by parent
           Every time we get a new node token it should be pushed onto this vector */ 
           printf("Start %s\n", t.cargo);
+          printf("Length of name: %d\n", strlen(t.cargo));
+          n = new char [strlen(t.cargo)+1];
+          strcpy(n, t.cargo);
           newNode = new node;  // newNode points to the new node
           //children = new std::vector<node*>;
           newNode->parent = currNode;
-          newNode->name = t.cargo;
+          newNode->name = n;
           newNode->data = 0;
           newNode->num_child = 0;
           //*children.push_back(newNode);
@@ -100,7 +104,9 @@ main (int argc, char *argv[])
           
         case Text:
           printf("Text %s\n", t.cargo);
-          currNode->data = t.cargo;
+          n = new char [strlen(t.cargo)+1];
+          strcpy(n, t.cargo);
+          currNode->data = n;
           printf("%s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
 
           break;
@@ -208,7 +214,8 @@ void dumpTree(node *dumpNode, int depth)
   for (i = 0; i < depth; i++)
     printf("  ");
   //printf("%s \n", dumpNode->name);
-  printf("%s %d    %s\n", dumpNode->name, dumpNode->num_child, dumpNode->data);
+  //printf("%s %d    %s\n", dumpNode->name, dumpNode->num_child, dumpNode->data);
+  printf("%s %d\n", dumpNode->name, dumpNode->num_child);
   for (std::vector<node*>::iterator j = dumpNode->child.begin(); j != dumpNode->child.end(); ++j)
     dumpTree(*j, depth + 1);
     
