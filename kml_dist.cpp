@@ -42,6 +42,7 @@ class node
   node* upLevel();
   node();
   void dumpTree(int depth);
+  node* getChild(char* name, int num);
 };
 
 node* node::addChild(char* name)
@@ -92,6 +93,24 @@ node* node::upLevel()
   return parent;
 }
         
+node* node::getChild(char* name, int num)
+{
+  printf("getChild: called with %s %d\n", name, num_child);
+  
+  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+  {
+    printf("getChild: found %s\n", (*j)->name);
+    
+    if (strcmp((*j)->name, name) == 0)
+    {
+      printf("getChild: Matched\n");
+      return *j;
+    }
+      
+  }
+}
+
+
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
 void dumpTree (node *dumpNode, int depth);
@@ -153,10 +172,13 @@ int main (int argc, char *argv[])
 
   printf("End of file\n\n");
   // Now dump out the contents of the tree.
-  currNode = root;  // should be the case anyway.
+  //currNode = root;  // should be the case anyway.
   printf("\n\nStructure of xml tree:\n");
   //dumpTree(root, 0);
   currNode->dumpTree(0);
+  currNode = root->getChild("kml", 1)->getChild("Document", 1);
+  printf("Main: %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+
   } 
 }
 
