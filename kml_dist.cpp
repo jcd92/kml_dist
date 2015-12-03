@@ -44,7 +44,7 @@ struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
 void dumpTree (node *dumpNode, int depth);
 
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
   FILE *input;
   struct token t;
