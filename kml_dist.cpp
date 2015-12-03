@@ -40,6 +40,8 @@ class node
   node* addChild(char* name);
   void addText(char* text);
   node* upLevel();
+  node();
+  void dumpTree(int depth);
 };
 
 node* node::addChild(char* name)
@@ -65,6 +67,14 @@ node* node::addChild(char* name)
   printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
   
   return newNode;
+}
+
+node::node()
+{
+  parent = 0;
+  name = 0;
+  data = 0;
+  num_child = 0;
 }
   
 void node::addText(char* text)
@@ -145,7 +155,8 @@ int main (int argc, char *argv[])
   // Now dump out the contents of the tree.
   currNode = root;  // should be the case anyway.
   printf("\n\nStructure of xml tree:\n");
-  dumpTree(root, 0);
+  //dumpTree(root, 0);
+  currNode->dumpTree(0);
   } 
 }
 
@@ -229,19 +240,14 @@ struct token tokenizer(FILE *source)
   }
 }
 
-void dumpTree(node *dumpNode, int depth)
+
+void node::dumpTree(int depth)
 {
   int i;
-  //std::vector<node*>::const_iterator j;
-  
+
   for (i = 0; i < depth; i++)
     printf("  ");
-  //printf("%s \n", dumpNode->name);
-  //printf("%s %d    %s\n", dumpNode->name, dumpNode->num_child, dumpNode->data);
-  printf("%s %d\n", dumpNode->name, dumpNode->num_child);
-  for (std::vector<node*>::iterator j = dumpNode->child.begin(); j != dumpNode->child.end(); ++j)
-    dumpTree(*j, depth + 1);
-    
-    //dumpTree(dumpNode->child[j], depth + 1);
-
+  printf("%s %d\n", name, num_child);
+  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+    (*j)->dumpTree(depth + 1);
 }
