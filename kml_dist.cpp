@@ -29,16 +29,58 @@ struct token {
   Tokentype type;
 };
 
-struct node
+class node
 {
+  public:
   char *name;
   char *data;
   int num_child;
-  int num_sibling;
   node *parent;
   std::vector<node*> child;
+  node* addChild(char* name);
+  void addText(char* text);
+  node* upLevel();
 };
 
+node* node::addChild(char* name)
+{
+  node *newNode;
+  char *n;
+
+  printf("Node: this node's address is %x\n", this);
+  //printf("Node: length of name: %d\n", strlen(name));
+
+  n = new char [strlen(name)+1];
+  strcpy(n, name);
+  newNode = new node;  // newNode points to the new node
+  //children = new std::vector<node*>;
+  newNode->parent = this;
+  newNode->name = n;
+  newNode->data = 0;
+  newNode->num_child = 0;
+  printf("Node: %s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
+  
+  num_child++;
+  child.push_back(newNode);
+  printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
+  
+  return newNode;
+}
+  
+void node::addText(char* text)
+{
+  char *t;
+  
+  printf("Text %s\n", text);
+  t = new char [strlen(text)+1];
+  strcpy(t, text);
+  data = t;
+}
+
+node* node::upLevel()
+{
+  return parent;
+}
         
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
@@ -52,11 +94,9 @@ int main (int argc, char *argv[])
   node *currNode;
   node *newNode;
   root = new node;
+  printf("Root is at %x\n", root);
   root->name = 0;
   root->num_child = 0;
-  root->num_sibling = 0;
-//  std::vector<node*> *children;
-//  root->child = children;
   char *n;
   
   if ((input = fopen(argv[1], "r")) == NULL)
@@ -70,32 +110,18 @@ int main (int argc, char *argv[])
       switch (t.type)
       {
         case Start:
-          /* Need to create a vector of node pointers, and a pointer for the vector to be stored
-          in the node.child element.  Assume first call has empty vector created by parent
-          Every time we get a new node token it should be pushed onto this vector */ 
           printf("Start %s\n", t.cargo);
-          printf("Length of name: %d\n", strlen(t.cargo));
-          n = new char [strlen(t.cargo)+1];
-          strcpy(n, t.cargo);
-          newNode = new node;  // newNode points to the new node
-          //children = new std::vector<node*>;
-          newNode->parent = currNode;
-          newNode->name = n;
-          newNode->data = 0;
-          newNode->num_child = 0;
-          //*children.push_back(newNode);
-          //newNode->child.push_back(children);; // Add a new child to the vector
-          printf("%s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
+          //printf("Length of name: %d\n", strlen(t.cargo));
           
-          currNode->num_child++;
-          currNode->child.push_back(newNode);
-          currNode = newNode;
-          printf("New node %s\n", currNode->name);
+          currNode = currNode->addChild(t.cargo);;
+          printf("Main: new node %s is at %x\n", currNode->name, currNode);
           break;
           
         case End:
           printf("End %s\n", t.cargo);
-          currNode = currNode->parent;
+          printf("Main: End %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+          currNode = currNode->upLevel();
+          printf("Main: parent %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
           break;
           
         case Comment:
@@ -103,11 +129,8 @@ int main (int argc, char *argv[])
           break;
           
         case Text:
-          printf("Text %s\n", t.cargo);
-          n = new char [strlen(t.cargo)+1];
-          strcpy(n, t.cargo);
-          currNode->data = n;
-          printf("%s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+          currNode->addText(t.cargo);
+          printf("Main: Text added to %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
 
           break;
           
