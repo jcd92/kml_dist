@@ -33,16 +33,16 @@ struct token
   Tokentype type;
 };
 
-class node
+class Node
 {
   public:
-    node* addChild(char* name);
+    Node* addChild(char* name);
     void addText(char* text);
-    node* upLevel();
-    node();
-    ~node();
+    Node* upLevel();
+    Node();
+    ~Node();
     void dumpTree(int depth);
-    node* getChild(char* name, int num = 0);
+    Node* getChild(char* name, int num = 0);
     int getNumChild(char* findName = 0);
     char* getText();
     char* getName();
@@ -50,8 +50,8 @@ class node
   private:
     char *name;
     char *data;
-    node *parent;
-    std::vector<node*> child;
+    Node *parent;
+    std::vector<Node*> child;
     int num_child;
 
 };
@@ -65,12 +65,12 @@ double ConvertToRadians (double val)
 
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
-void dumpTree (node *dumpNode, int depth);
-void readFile(node *root, FILE* xmlFile);
+void dumpTree (Node *dumpNode, int depth);
+void readFile(Node *root, FILE* xmlFile);
 
 int main (int argc, char *argv[])
 {
-  node *root, *currNode;
+  Node *root, *currNode;
   FILE *input;
   const double R = 6371; // km 
   const double km_to_miles = 0.621371;
@@ -80,7 +80,7 @@ int main (int argc, char *argv[])
     printf("File could not be opened\n");
   else 
   {
-    root = new node;
+    root = new Node;
     readFile(root, input);
     currNode = root->getChild("kml")->getChild("Document");
     int n = currNode->getNumChild("Placemark");
@@ -205,10 +205,10 @@ struct token tokenizer(FILE *source)
   }
 }
 
-void readFile(node *root, FILE* xmlFile)
+void readFile(Node *root, FILE* xmlFile)
 {
   struct token t;
-  node *currNode;
+  Node *currNode;
   
   currNode = root;
   t = tokenizer(xmlFile);
@@ -240,14 +240,14 @@ void readFile(node *root, FILE* xmlFile)
   }
 }
 
-node* node::addChild(char* name)
+Node* Node::addChild(char* name)
 {
-  node *newNode;
+  Node *newNode;
   char *n;
 
   n = new char [strlen(name)+1];
   strcpy(n, name);
-  newNode = new node;  // newNode points to the new node
+  newNode = new Node;  // newNode points to the new node
   newNode->parent = this;
   newNode->name = n;
   newNode->data = 0;
@@ -258,7 +258,7 @@ node* node::addChild(char* name)
   return newNode;
 }
 
-node::node()
+Node::Node()
 {
   parent = 0;
   name = 0;
@@ -266,13 +266,13 @@ node::node()
   num_child = 0;
 }
 
-node::~node()
+Node::~Node()
 {
-  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+  for (std::vector<Node*>::iterator j = child.begin(); j != child.end(); ++j)
     delete (*j);
 }
   
-void node::addText(char* text)
+void Node::addText(char* text)
 {
   char *t;
   
@@ -281,16 +281,16 @@ void node::addText(char* text)
   data = t;
 }
 
-node* node::upLevel()
+Node* Node::upLevel()
 {
   return parent;
 }
         
-node* node::getChild(char* name, int num)
+Node* Node::getChild(char* name, int num)
 {
   int c = 0;
   
-  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+  for (std::vector<Node*>::iterator j = child.begin(); j != child.end(); ++j)
   {
     if (strcmp((*j)->name, name) == 0)
     {
@@ -301,14 +301,14 @@ node* node::getChild(char* name, int num)
   }
 }
 
-int node::getNumChild(char* findName)
+int Node::getNumChild(char* findName)
 {
   if(findName == 0) 
   {
     return num_child;
   } else {
     int l = 0;
-    for (std::vector<node*>::iterator f = child.begin(); f != child.end(); ++f)
+    for (std::vector<Node*>::iterator f = child.begin(); f != child.end(); ++f)
     {
       if (strcmp((*f)->name, findName) == 0)
         l++;
@@ -317,23 +317,23 @@ int node::getNumChild(char* findName)
   }   
 }
 
-void node::dumpTree(int depth)
+void Node::dumpTree(int depth)
 {
   int i;
 
   for (i = 0; i < depth; i++)
     printf("  ");
   printf("%s %d %s\n", name, num_child, data);
-  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+  for (std::vector<Node*>::iterator j = child.begin(); j != child.end(); ++j)
     (*j)->dumpTree(depth + 1);
 }
 
-char* node::getText()
+char* Node::getText()
 {
   return data;
 }
 
-char* node::getName()
+char* Node::getName()
 {
   return name;
 }
