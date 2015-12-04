@@ -1,8 +1,10 @@
 /* A simple XML parser */
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 #include <vector>
+#include <math.h>
+#include <stdlib.h>
 
 enum Chartype
 {
@@ -39,8 +41,8 @@ class node
     node();
     ~node();
     void dumpTree(int depth);
-    node* getChild(char* name, int num = 1);
-    int getNumChild();
+    node* getChild(char* name, int num = 0);
+    int getNumChild(char* findName = 0);
     char* getText();
     char* getName();
     
@@ -53,6 +55,11 @@ class node
 
 };
 
+double ConvertToRadians (double val){ 
+    double PI = 3.14159265359; 
+    return (val*PI) / 180; 
+} 
+
 
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
@@ -63,6 +70,9 @@ int main (int argc, char *argv[])
 {
   node *root, *currNode;
   FILE *input;
+  const double R = 6371; // km 
+  const double km_to_miles = 0.621371;
+  double total_dist = 0;
   
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
@@ -73,12 +83,54 @@ int main (int argc, char *argv[])
     //printf("End of file\n\n");
     // Now dump out the contents of the tree.
     //currNode = root;  // should be the case anyway.
-    printf("\nStructure of xml tree:\n");
+    //printf("\nStructure of xml tree:\n");
     //dumpTree(root, 0);
     //currNode->dumpTree(0);
-    currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
-    currNode->dumpTree(0);
+    //currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
+    //currNode->dumpTree(0);
     //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
+    currNode = root->getChild("kml")->getChild("Document");
+    int n = currNode->getNumChild("Placemark");
+    printf("There are %d routes \n", n);
+    for (int i=0; i<n; i++) 
+      {
+      printf("%-30s", currNode->getChild("Placemark", i)->getChild("name")->getText());
+      //xNode=xMainNode.getChildNode("Document").getChildNode("Placemark",i).getChildNode("LineString").getChildNode("coordinates");
+      //xNode=xMainNode.getChildNode("Placemark",i).getChildNode("gx:Track");
+      int m=currNode->getChild("Placemark", i)->getChild("gx:Track")->getNumChild("gx:coord");
+      //printf("There are '%d' points\n", m);
+      char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord")->getText());
+      char *tokenptr=strtok(coords, " ");
+      double prev_X=atof(tokenptr);
+      double prev_Y=atof(strtok(NULL, " "));
+      double prev_Z=atof(strtok(NULL, " "))/1000;
+      double d = 0.0;
+      double delta_d = 0.0;
+      double delta_h = 0.0;
+       for (int j=1; j<m; j++) {
+        //printf("gx:coord %s\n", xNode.getChildNode("gx:coord",j).getText());
+        char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord",j)->getText());
+        char *tokenptr=strtok(coords, " ");
+        double X=atof(tokenptr);
+        double Y=atof(strtok(NULL, " "));
+        double Z=atof(strtok(NULL, " "))/1000;
+        //printf ("X: %f Y: %f Z: %f\n", X, Y, Z);
+        delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
+        delta_h = fabs(Z - prev_Z);
+        d += sqrt(delta_d*delta_d + delta_h * delta_h);
+        //d = acos(sin(ConvertToRadians(lat1))*sin(ConvertToRadians(lat2)) + cos(ConvertToRadians(lat1))*cos(ConvertToRadians(lat2))* cos(ConvertToRadians(lon2-lon1))) * R; 
+        prev_X = X;
+        prev_Y = Y;
+        prev_Z = Z;
+      }
+      //total_dist += d;  
+      total_dist += round(d * 10)/10;  
+      //printf ("Distance %.1f    Total %.1f\n", d*km_to_miles, total_dist*km_to_miles);
+      printf ("%.1f, Rounded : %f\n", d*km_to_miles, round(d * km_to_miles * 10)/10);
+    }
+  //free(t);
+  printf ("Total distance %.1f\n", total_dist*km_to_miles);
+
     delete root;
   } 
 }
@@ -239,7 +291,7 @@ node* node::upLevel()
 node* node::getChild(char* name, int num)
 {
   //printf("getChild: called with %s %d\n", name, num_child);
-  int c = 1;
+  int c = 0;
   
   for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
   {
@@ -258,9 +310,26 @@ node* node::getChild(char* name, int num)
   }
 }
 
-int node::getNumChild()
+int node::getNumChild(char* findName)
 {
-  return num_child;
+  if(findName == 0) 
+  {
+    return num_child;
+  } else {
+    int l = 0;
+    for (std::vector<node*>::iterator f = child.begin(); f != child.end(); ++f)
+    {
+      //printf("getNumChild: found %s with loop counter %d\n", (*f)->name, l);
+      
+      if (strcmp((*f)->name, findName) == 0)
+      {
+        l++;
+        //printf("getNumChild: found %s %d times\n", (*f)->name, l);
+      }
+    }
+    //printf("getNumChild: Result - found %s %d times.  Returning\n", findName, l);
+    return l;
+  }   
 }
 
 void node::dumpTree(int depth)
@@ -289,7 +358,7 @@ void readFile(node *root, FILE* xmlFile)
 {
   struct token t;
   node *currNode;
-  printf("Root is at %x\n", root);
+  //printf("Root is at %x\n", root);
   
   currNode = root;
   t = tokenizer(xmlFile);
