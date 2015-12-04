@@ -32,6 +32,7 @@ struct token {
 class node
 {
   public:
+    //void readFile(FILE* xmlFile);
     node* addChild(char* name);
     void addText(char* text);
     node* upLevel();
@@ -56,69 +57,29 @@ class node
 struct character scanner(FILE *source);
 struct token tokenizer(FILE *source);
 void dumpTree (node *dumpNode, int depth);
+void readFile(node *root, FILE* xmlFile);
 
 int main (int argc, char *argv[])
 {
+  node *root, *currNode;
   FILE *input;
-  struct token t;
-  node *root;
-  node *currNode;
-  root = new node;
-  //printf("Root is at %x\n", root);
-  char *n;
   
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
   else {
-    currNode = root;
-    t = tokenizer(input);
-
-    while (t.type != EndOfFileToken) {
-      //printf("Token : %8s %s\n", t.type, t.cargo);
-      switch (t.type)
-      {
-        case Start:
-          //printf("Start %s\n", t.cargo);
-          //printf("Length of name: %d\n", strlen(t.cargo));
-          
-          currNode = currNode->addChild(t.cargo);;
-          //printf("Main: new node %s is at %x\n", currNode->getName(), currNode);
-          break;
-          
-        case End:
-          //printf("End %s\n", t.cargo);
-          //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
-          currNode = currNode->upLevel();
-          //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
-          break;
-          
-        case Comment:
-          //printf("Comment %s\n", t.cargo);
-          break;
-          
-        case Text:
-          currNode->addText(t.cargo);
-          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
-          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
-          break;
-          
-         default :
-           printf("Unknown token %s!\n", t.cargo);
-           
-      }
-      t = tokenizer(input);
-    }
-
-  //printf("End of file\n\n");
-  // Now dump out the contents of the tree.
-  //currNode = root;  // should be the case anyway.
-  printf("\nStructure of xml tree:\n");
-  //dumpTree(root, 0);
-  //currNode->dumpTree(0);
-  currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
-  currNode->dumpTree(0);
-  //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
-  delete root;
+    root = new node;
+    //root->readFile(input);
+    readFile(root, input);
+    //printf("End of file\n\n");
+    // Now dump out the contents of the tree.
+    //currNode = root;  // should be the case anyway.
+    printf("\nStructure of xml tree:\n");
+    //dumpTree(root, 0);
+    //currNode->dumpTree(0);
+    currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
+    currNode->dumpTree(0);
+    //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
+    delete root;
   } 
 }
 
@@ -322,4 +283,51 @@ char* node::getText()
 char* node::getName()
 {
   return name;
+}
+
+void readFile(node *root, FILE* xmlFile)
+{
+  struct token t;
+  node *currNode;
+  printf("Root is at %x\n", root);
+  
+  currNode = root;
+  t = tokenizer(xmlFile);
+
+  while (t.type != EndOfFileToken) 
+  {
+    //printf("Token : %8s %s\n", t.type, t.cargo);
+    switch (t.type)
+    {
+      case Start:
+        //printf("Start %s\n", t.cargo);
+        //printf("Length of name: %d\n", strlen(t.cargo));
+        
+        currNode = currNode->addChild(t.cargo);;
+        //printf("Main: new node %s is at %x\n", currNode->getName(), currNode);
+        break;
+        
+      case End:
+        //printf("End %s\n", t.cargo);
+        //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
+        currNode = currNode->upLevel();
+        //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
+        break;
+        
+      case Comment:
+        //printf("Comment %s\n", t.cargo);
+        break;
+        
+      case Text:
+        currNode->addText(t.cargo);
+        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
+        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
+        break;
+        
+      default :
+        printf("Unknown token %s!\n", t.cargo);
+         
+    }
+    t = tokenizer(xmlFile);
+  }
 }
