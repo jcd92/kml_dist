@@ -21,12 +21,14 @@ enum Tokentype
    EndOfFileToken
 };
 
-struct character {
+struct character 
+{
   char cargo;
   Chartype type;
 };
 
-struct token {
+struct token 
+{
   char cargo[256];
   Tokentype type;
 };
@@ -55,7 +57,8 @@ class node
 
 };
 
-double ConvertToRadians (double val){ 
+double ConvertToRadians (double val)
+{ 
     double PI = 3.14159265359; 
     return (val*PI) / 180; 
 } 
@@ -76,7 +79,8 @@ int main (int argc, char *argv[])
   
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
-  else {
+  else 
+  {
     root = new node;
     //root->readFile(input);
     readFile(root, input);
@@ -93,8 +97,8 @@ int main (int argc, char *argv[])
     int n = currNode->getNumChild("Placemark");
     printf("There are %d routes \n", n);
     for (int i=0; i<n; i++) 
-      {
-      printf("%-30s", currNode->getChild("Placemark", i)->getChild("name")->getText());
+    {
+      printf("%-65s", currNode->getChild("Placemark", i)->getChild("name")->getText());
       //xNode=xMainNode.getChildNode("Document").getChildNode("Placemark",i).getChildNode("LineString").getChildNode("coordinates");
       //xNode=xMainNode.getChildNode("Placemark",i).getChildNode("gx:Track");
       int m=currNode->getChild("Placemark", i)->getChild("gx:Track")->getNumChild("gx:coord");
@@ -107,7 +111,8 @@ int main (int argc, char *argv[])
       double d = 0.0;
       double delta_d = 0.0;
       double delta_h = 0.0;
-       for (int j=1; j<m; j++) {
+      for (int j=1; j<m; j++) 
+      {
         //printf("gx:coord %s\n", xNode.getChildNode("gx:coord",j).getText());
         char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord",j)->getText());
         char *tokenptr=strtok(coords, " ");
@@ -123,13 +128,14 @@ int main (int argc, char *argv[])
         prev_Y = Y;
         prev_Z = Z;
       }
-      //total_dist += d;  
-      total_dist += round(d * 10)/10;  
+      total_dist += d;  
+      //total_dist += round(d * 10)/10;  
       //printf ("Distance %.1f    Total %.1f\n", d*km_to_miles, total_dist*km_to_miles);
-      printf ("%.1f, Rounded : %f\n", d*km_to_miles, round(d * km_to_miles * 10)/10);
+      //printf ("%.1f, Rounded : %f\n", d*km_to_miles, round(d * km_to_miles * 10)/10);
+      printf ("Distance %.1f\n", d*km_to_miles);
     }
-  //free(t);
-  printf ("Total distance %.1f\n", total_dist*km_to_miles);
+
+    printf ("\n\nTotal distance: %.1f\n", total_dist*km_to_miles);
 
     delete root;
   } 
@@ -155,37 +161,46 @@ struct token tokenizer(FILE *source)
   struct character c;
   int n;
   
-  while (1) {
+  while (1) 
+  {
     c = scanner(source);
     //printf("TOK: c.type %s\n", c.type);
-    if (c.type ==  EndOfFile) {
+    if (c.type ==  EndOfFile) 
+    {
       //printf("Tokeniser: EOF\n");
       t.type = EndOfFileToken;
       return t;
-    } else {
+    } else 
+    {
       //printf("Character : %c\n", c.cargo);
 
-      while (c.cargo == ' ' || c.cargo == '\t' || c.cargo =='\n') {
+      while (c.cargo == ' ' || c.cargo == '\t' || c.cargo =='\n') 
+      {
         //printf("Whitespace : %c\n", c.cargo);
         c = scanner(source);    
       }
       //printf("Non w/s character: %c\n", c.cargo);
 
-      if (c.cargo == '<') {
+      if (c.cargo == '<') 
+      {
         // An xml node will have a name, and a possibly a list of attr="value", and a trailing /, 
         // but kml uses exlicit node ends and no attributes, so I will take some shortcuts.
         n = 0;
         c = scanner(source); // Check if this is a node start or a node end.
-        if (c.cargo == '/') {
+        if (c.cargo == '/') 
+        {
           t.type = End;      
-        } else if (c.cargo == '!' || c.cargo == '?' ) {
+        } else if (c.cargo == '!' || c.cargo == '?' ) 
+        {
           t.type = Comment;
-        } else {
+        } else 
+        {
           t.type =Start;
           t.cargo[n] = c.cargo;
           n++;      
         }
-        while (c.cargo != '>' && c.cargo != ' ') {
+        while (c.cargo != '>' && c.cargo != ' ') 
+        {
           c = scanner(source);    /*Keep scanning characters until we hit the end of the token*/
           //printf("Character in token : %c\n", c.cargo);
           t.cargo[n] = c.cargo;
@@ -201,7 +216,8 @@ struct token tokenizer(FILE *source)
         t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.
         //printf("End token\n");
         return t;
-      } else if (isprint(c.cargo)){
+      } else if (isprint(c.cargo))
+      {
         n = 0;
         t.type = Text;
         //printf("Text\n");
@@ -225,10 +241,58 @@ struct token tokenizer(FILE *source)
         t.cargo[n] = '\0';  // Overwrite the > character with the array terminator.        
         //printf("token2: %s\n", t.cargo);
         return t;
-      } else {
+      } else 
+      {
         printf("Illegal token start character %c\n", c.cargo);
       }
     }
+  }
+}
+
+void readFile(node *root, FILE* xmlFile)
+{
+  struct token t;
+  node *currNode;
+  //printf("Root is at %x\n", root);
+  
+  currNode = root;
+  t = tokenizer(xmlFile);
+
+  while (t.type != EndOfFileToken) 
+  {
+    //printf("Token : %8s %s\n", t.type, t.cargo);
+    switch (t.type)
+    {
+      case Start:
+        //printf("Start %s\n", t.cargo);
+        //printf("Length of name: %d\n", strlen(t.cargo));
+        
+        currNode = currNode->addChild(t.cargo);;
+        //printf("Main: new node %s is at %x\n", currNode->getName(), currNode);
+        break;
+        
+      case End:
+        //printf("End %s\n", t.cargo);
+        //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
+        currNode = currNode->upLevel();
+        //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
+        break;
+        
+      case Comment:
+        //printf("Comment %s\n", t.cargo);
+        break;
+        
+      case Text:
+        currNode->addText(t.cargo);
+        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
+        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
+        break;
+        
+      default :
+        printf("Unknown token %s!\n", t.cargo);
+         
+    }
+    t = tokenizer(xmlFile);
   }
 }
 
@@ -354,49 +418,3 @@ char* node::getName()
   return name;
 }
 
-void readFile(node *root, FILE* xmlFile)
-{
-  struct token t;
-  node *currNode;
-  //printf("Root is at %x\n", root);
-  
-  currNode = root;
-  t = tokenizer(xmlFile);
-
-  while (t.type != EndOfFileToken) 
-  {
-    //printf("Token : %8s %s\n", t.type, t.cargo);
-    switch (t.type)
-    {
-      case Start:
-        //printf("Start %s\n", t.cargo);
-        //printf("Length of name: %d\n", strlen(t.cargo));
-        
-        currNode = currNode->addChild(t.cargo);;
-        //printf("Main: new node %s is at %x\n", currNode->getName(), currNode);
-        break;
-        
-      case End:
-        //printf("End %s\n", t.cargo);
-        //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
-        currNode = currNode->upLevel();
-        //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
-        break;
-        
-      case Comment:
-        //printf("Comment %s\n", t.cargo);
-        break;
-        
-      case Text:
-        currNode->addText(t.cargo);
-        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
-        //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
-        break;
-        
-      default :
-        printf("Unknown token %s!\n", t.cargo);
-         
-    }
-    t = tokenizer(xmlFile);
-  }
-}
