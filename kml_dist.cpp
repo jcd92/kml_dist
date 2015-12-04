@@ -32,18 +32,24 @@ struct token {
 class node
 {
   public:
-  char *name;
-  char *data;
-  int num_child;
-  node *parent;
-  std::vector<node*> child;
-  node* addChild(char* name);
-  void addText(char* text);
-  node* upLevel();
-  node();
-  ~node();
-  void dumpTree(int depth);
-  node* getChild(char* name, int num);
+    int num_child;
+    node* addChild(char* name);
+    void addText(char* text);
+    node* upLevel();
+    node();
+    ~node();
+    void dumpTree(int depth);
+    node* getChild(char* name, int num);
+    int getNumChild();
+    char* getText();
+    char* getName();
+    
+  private:
+    char *name;
+    char *data;
+    node *parent;
+    std::vector<node*> child;
+
 };
 
 
@@ -57,11 +63,8 @@ int main (int argc, char *argv[])
   struct token t;
   node *root;
   node *currNode;
-  node *newNode;
   root = new node;
   printf("Root is at %x\n", root);
-  root->name = 0;
-  root->num_child = 0;
   char *n;
   
   if ((input = fopen(argv[1], "r")) == NULL)
@@ -79,14 +82,14 @@ int main (int argc, char *argv[])
           //printf("Length of name: %d\n", strlen(t.cargo));
           
           currNode = currNode->addChild(t.cargo);;
-          printf("Main: new node %s is at %x\n", currNode->name, currNode);
+          //printf("Main: new node %s is at %x\n", currNode->getName(), currNode);
           break;
           
         case End:
           printf("End %s\n", t.cargo);
-          printf("Main: End %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+          //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
           currNode = currNode->upLevel();
-          printf("Main: parent %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+          //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
           break;
           
         case Comment:
@@ -95,8 +98,8 @@ int main (int argc, char *argv[])
           
         case Text:
           currNode->addText(t.cargo);
-          printf("Main: Text added to %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
-
+          printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
+          //printf("Main: Text added to %s : %s\n", currNode->getName(), currNode->getText());
           break;
           
          default :
@@ -113,7 +116,7 @@ int main (int argc, char *argv[])
   //dumpTree(root, 0);
   currNode->dumpTree(0);
   currNode = root->getChild("kml", 1)->getChild("Document", 1);
-  printf("Main: %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
+  //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
   delete root;
   } 
 }
@@ -203,7 +206,7 @@ node* node::addChild(char* name)
   node *newNode;
   char *n;
 
-  printf("Node: this node's address is %x\n", this);
+  //printf("Node: this node's address is %x\n", this);
   //printf("Node: length of name: %d\n", strlen(name));
 
   n = new char [strlen(name)+1];
@@ -214,11 +217,11 @@ node* node::addChild(char* name)
   newNode->name = n;
   newNode->data = 0;
   newNode->num_child = 0;
-  printf("Node: %s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
+  //printf("Node: %s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
   
   num_child++;
   child.push_back(newNode);
-  printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
+  //printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
   
   return newNode;
 }
@@ -233,7 +236,7 @@ node::node()
 
 node::~node()
 {
-  printf("Node: Destroying %s\n", name);
+  //printf("Node: Destroying %s\n", name);
   for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
     delete (*j);
 }
@@ -242,10 +245,11 @@ void node::addText(char* text)
 {
   char *t;
   
-  printf("Text %s\n", text);
+  //printf("Text %s\n", text);
   t = new char [strlen(text)+1];
   strcpy(t, text);
   data = t;
+  //printf("Node: added text %s\n", data);
 }
 
 node* node::upLevel()
@@ -270,6 +274,10 @@ node* node::getChild(char* name, int num)
   }
 }
 
+int node::getNumChild()
+{
+  return num_child;
+}
 
 void node::dumpTree(int depth)
 {
@@ -282,3 +290,12 @@ void node::dumpTree(int depth)
     (*j)->dumpTree(depth + 1);
 }
 
+char* node::getText()
+{
+  return data;
+}
+
+char* node::getName()
+{
+  return name;
+}
