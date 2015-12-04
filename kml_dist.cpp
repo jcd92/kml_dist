@@ -39,8 +39,8 @@ class node
     node();
     ~node();
     void dumpTree(int depth);
-    node* getChild(char* name, int num);
-    int getNumChild();
+    node* getChild(char* name, int num = 1);
+    int getNumChild() const;
     char* getText();
     char* getName();
     
@@ -98,8 +98,8 @@ int main (int argc, char *argv[])
           
         case Text:
           currNode->addText(t.cargo);
-          printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
-          //printf("Main: Text added to %s : %s\n", currNode->getName(), currNode->getText());
+          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
+          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->getText());
           break;
           
          default :
@@ -115,7 +115,8 @@ int main (int argc, char *argv[])
   printf("\n\nStructure of xml tree:\n");
   //dumpTree(root, 0);
   currNode->dumpTree(0);
-  currNode = root->getChild("kml", 1)->getChild("Document", 1);
+  currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
+  currNode->dumpTree(0);
   //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
   delete root;
   } 
@@ -171,12 +172,19 @@ struct token tokenizer(FILE *source)
           t.cargo[n] = c.cargo;
           n++;      
         }
-        while (c.cargo != '>') {
+        while (c.cargo != '>' && c.cargo != ' ') {
           c = scanner(source);    /*Keep scanning characters until we hit the end of the token*/
           //printf("Character in token : %c\n", c.cargo);
           t.cargo[n] = c.cargo;
           n++;
         }
+        if (c.cargo == ' ') 
+        {  // Found some more text, likely parameters
+          while (c.cargo != '>')
+          {
+            c = scanner(source);    /*Keep scanning characters until we hit the end of the token*/
+          }
+        }      
         t.cargo[n-1] = '\0';  // Overwrite the > character with the array terminator.
         //printf("End token\n");
         return t;
@@ -259,22 +267,27 @@ node* node::upLevel()
         
 node* node::getChild(char* name, int num)
 {
-  printf("getChild: called with %s %d\n", name, num_child);
+  //printf("getChild: called with %s %d\n", name, num_child);
+  int c = 1;
   
   for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
   {
-    printf("getChild: found %s\n", (*j)->name);
+    //printf("getChild: found %s \n", (*j)->name);
     
     if (strcmp((*j)->name, name) == 0)
     {
-      printf("getChild: Matched\n");
-      return *j;
-    }
-      
+      //printf("getChild: Matched %s %d times\n", (*j)->name, c); 
+      if (c == num)
+      {
+        //printf("getChild: found %s %d times\n", (*j)->name, c);
+        return *j;
+      }
+      c++;
+    }  
   }
 }
 
-int node::getNumChild()
+int node::getNumChild() const
 {
   return num_child;
 }
