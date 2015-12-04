@@ -32,7 +32,6 @@ struct token {
 class node
 {
   public:
-    int num_child;
     node* addChild(char* name);
     void addText(char* text);
     node* upLevel();
@@ -40,7 +39,7 @@ class node
     ~node();
     void dumpTree(int depth);
     node* getChild(char* name, int num = 1);
-    int getNumChild() const;
+    int getNumChild();
     char* getText();
     char* getName();
     
@@ -49,6 +48,7 @@ class node
     char *data;
     node *parent;
     std::vector<node*> child;
+    int num_child;
 
 };
 
@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
   node *root;
   node *currNode;
   root = new node;
-  printf("Root is at %x\n", root);
+  //printf("Root is at %x\n", root);
   char *n;
   
   if ((input = fopen(argv[1], "r")) == NULL)
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
       switch (t.type)
       {
         case Start:
-          printf("Start %s\n", t.cargo);
+          //printf("Start %s\n", t.cargo);
           //printf("Length of name: %d\n", strlen(t.cargo));
           
           currNode = currNode->addChild(t.cargo);;
@@ -86,20 +86,20 @@ int main (int argc, char *argv[])
           break;
           
         case End:
-          printf("End %s\n", t.cargo);
+          //printf("End %s\n", t.cargo);
           //printf("Main: End %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->data);
           currNode = currNode->upLevel();
-          //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
+          //printf("Main: parent %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
           break;
           
         case Comment:
-          printf("Comment %s\n", t.cargo);
+          //printf("Comment %s\n", t.cargo);
           break;
           
         case Text:
           currNode->addText(t.cargo);
           //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->getText());
-          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild, currNode->getText());
+          //printf("Main: Text added to %s %d    %s\n", currNode->getName(), currNode->getNumChild(), currNode->getText());
           break;
           
          default :
@@ -109,12 +109,12 @@ int main (int argc, char *argv[])
       t = tokenizer(input);
     }
 
-  printf("End of file\n\n");
+  //printf("End of file\n\n");
   // Now dump out the contents of the tree.
   //currNode = root;  // should be the case anyway.
-  printf("\n\nStructure of xml tree:\n");
+  printf("\nStructure of xml tree:\n");
   //dumpTree(root, 0);
-  currNode->dumpTree(0);
+  //currNode->dumpTree(0);
   currNode = root->getChild("kml")->getChild("Document")->getChild("Placemark", 2);
   currNode->dumpTree(0);
   //printf("Main: %s %d    %s\n", currNode->getName(), currNode->num_child, currNode->data);
@@ -195,12 +195,22 @@ struct token tokenizer(FILE *source)
         //t.cargo[0] = c.cargo;
         while (c.cargo !='<') {
           //printf("Character in text : %c\n", c.cargo);
-          t.cargo[n] = c.cargo;
-          n++;
+          //printf("Scan: read %d characters   %c", n, c.cargo);
+          if (n < 254)
+          {
+            t.cargo[n] = c.cargo;
+            n++;
+            //printf("Stored!");
+          }
+          //printf("\n");
+
           c = scanner(source);    /*Keep scanning characters until we hit a non text */
         }
+        //printf("token: %s\n", t.cargo);
         ungetc(c.cargo, source);  // Push the next character back for processing next time
+        //printf("token: n= %d", n);
         t.cargo[n] = '\0';  // Overwrite the > character with the array terminator.        
+        //printf("token2: %s\n", t.cargo);
         return t;
       } else {
         printf("Illegal token start character %c\n", c.cargo);
@@ -287,7 +297,7 @@ node* node::getChild(char* name, int num)
   }
 }
 
-int node::getNumChild() const
+int node::getNumChild()
 {
   return num_child;
 }
@@ -298,7 +308,8 @@ void node::dumpTree(int depth)
 
   for (i = 0; i < depth; i++)
     printf("  ");
-  printf("%s %d\n", name, num_child);
+  //printf("%s %d\n", name, num_child);
+  printf("%s %d %s\n", name, num_child, data);
   for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
     (*j)->dumpTree(depth + 1);
 }
