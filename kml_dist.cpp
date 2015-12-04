@@ -41,74 +41,10 @@ class node
   void addText(char* text);
   node* upLevel();
   node();
+  ~node();
   void dumpTree(int depth);
   node* getChild(char* name, int num);
 };
-
-node* node::addChild(char* name)
-{
-  node *newNode;
-  char *n;
-
-  printf("Node: this node's address is %x\n", this);
-  //printf("Node: length of name: %d\n", strlen(name));
-
-  n = new char [strlen(name)+1];
-  strcpy(n, name);
-  newNode = new node;  // newNode points to the new node
-  //children = new std::vector<node*>;
-  newNode->parent = this;
-  newNode->name = n;
-  newNode->data = 0;
-  newNode->num_child = 0;
-  printf("Node: %s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
-  
-  num_child++;
-  child.push_back(newNode);
-  printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
-  
-  return newNode;
-}
-
-node::node()
-{
-  parent = 0;
-  name = 0;
-  data = 0;
-  num_child = 0;
-}
-  
-void node::addText(char* text)
-{
-  char *t;
-  
-  printf("Text %s\n", text);
-  t = new char [strlen(text)+1];
-  strcpy(t, text);
-  data = t;
-}
-
-node* node::upLevel()
-{
-  return parent;
-}
-        
-node* node::getChild(char* name, int num)
-{
-  printf("getChild: called with %s %d\n", name, num_child);
-  
-  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
-  {
-    printf("getChild: found %s\n", (*j)->name);
-    
-    if (strcmp((*j)->name, name) == 0)
-    {
-      printf("getChild: Matched\n");
-      return *j;
-    }
-      
-  }
-}
 
 
 struct character scanner(FILE *source);
@@ -178,7 +114,7 @@ int main (int argc, char *argv[])
   currNode->dumpTree(0);
   currNode = root->getChild("kml", 1)->getChild("Document", 1);
   printf("Main: %s %d    %s\n", currNode->name, currNode->num_child, currNode->data);
-
+  delete root;
   } 
 }
 
@@ -262,6 +198,78 @@ struct token tokenizer(FILE *source)
   }
 }
 
+node* node::addChild(char* name)
+{
+  node *newNode;
+  char *n;
+
+  printf("Node: this node's address is %x\n", this);
+  //printf("Node: length of name: %d\n", strlen(name));
+
+  n = new char [strlen(name)+1];
+  strcpy(n, name);
+  newNode = new node;  // newNode points to the new node
+  //children = new std::vector<node*>;
+  newNode->parent = this;
+  newNode->name = n;
+  newNode->data = 0;
+  newNode->num_child = 0;
+  printf("Node: %s %d    %s\n", newNode->name, newNode->num_child, newNode->data);
+  
+  num_child++;
+  child.push_back(newNode);
+  printf("Node: child's address is %x : Parent is at %x\n", newNode, newNode->parent);
+  
+  return newNode;
+}
+
+node::node()
+{
+  parent = 0;
+  name = 0;
+  data = 0;
+  num_child = 0;
+}
+
+node::~node()
+{
+  printf("Node: Destroying %s\n", name);
+  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+    delete (*j);
+}
+  
+void node::addText(char* text)
+{
+  char *t;
+  
+  printf("Text %s\n", text);
+  t = new char [strlen(text)+1];
+  strcpy(t, text);
+  data = t;
+}
+
+node* node::upLevel()
+{
+  return parent;
+}
+        
+node* node::getChild(char* name, int num)
+{
+  printf("getChild: called with %s %d\n", name, num_child);
+  
+  for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
+  {
+    printf("getChild: found %s\n", (*j)->name);
+    
+    if (strcmp((*j)->name, name) == 0)
+    {
+      printf("getChild: Matched\n");
+      return *j;
+    }
+      
+  }
+}
+
 
 void node::dumpTree(int depth)
 {
@@ -273,3 +281,4 @@ void node::dumpTree(int depth)
   for (std::vector<node*>::iterator j = child.begin(); j != child.end(); ++j)
     (*j)->dumpTree(depth + 1);
 }
+
