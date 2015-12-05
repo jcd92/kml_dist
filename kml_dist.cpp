@@ -42,7 +42,7 @@ class Node
     Node();
     ~Node();
     void dumpTree(int depth);
-    Node* getChild(char* name, int num = 0);
+    Node* getChild(char* name, int num = 1);
     int getNumChild(char* findName = 0);
     char* getText();
     char* getName();
@@ -85,7 +85,7 @@ int main (int argc, char *argv[])
     currNode = root->getChild("kml")->getChild("Document");
     int n = currNode->getNumChild("Placemark");
     printf("There are %d routes \n", n);
-    for (int i=0; i<n; i++) 
+    for (int i=1; i<=n; i++) 
     {
       printf("%-65s", currNode->getChild("Placemark", i)->getChild("name")->getText());
       int m=currNode->getChild("Placemark", i)->getChild("gx:Track")->getNumChild("gx:coord");
@@ -97,9 +97,11 @@ int main (int argc, char *argv[])
       double d = 0.0;
       double delta_d = 0.0;
       double delta_h = 0.0;
-      for (int j=1; j<m; j++) 
+      //printf("Main: first coords %s\n", coords);
+      for (int j=2; j<=m; j++) 
       {
         char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord",j)->getText());
+        //printf("Main: coords %s\n", coords);
         char *tokenptr=strtok(coords, " ");
         double X=atof(tokenptr);
         double Y=atof(strtok(NULL, " "));
@@ -107,6 +109,7 @@ int main (int argc, char *argv[])
         delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
         delta_h = fabs(Z - prev_Z);
         d += sqrt(delta_d*delta_d + delta_h * delta_h);
+        //printf("Dist: %f X: %f Y: %f Z: %f Delta d: %f Delta h: %h\n", d, X, Y, Z, delta_d, delta_h);
         prev_X = X;
         prev_Y = Y;
         prev_Z = Z;
@@ -288,7 +291,7 @@ Node* Node::upLevel()
         
 Node* Node::getChild(char* name, int num)
 {
-  int c = 0;
+  int c = 1;
   
   for (std::vector<Node*>::iterator j = child.begin(); j != child.end(); ++j)
   {
