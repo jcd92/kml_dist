@@ -106,7 +106,18 @@ int main (int argc, char *argv[])
         double X=atof(tokenptr);
         double Y=atof(strtok(NULL, " "));
         double Z=atof(strtok(NULL, " "))/1000;
-        delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
+        // Spherical Law of Cosines method
+        //delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
+
+        // Haversine method (better for smaller distances
+        double th1 = ConvertToRadians(prev_Y);
+        double th2 = ConvertToRadians(Y);
+        double delta_th = ConvertToRadians(Y - prev_Y);
+        double delta_lam = ConvertToRadians(X - prev_X);
+        double a = sin(delta_th/2) * sin(delta_th/2) + cos(th1) * cos(th2) * sin(delta_lam/2) * sin(delta_lam/2);
+        double c = 2*atan2(sqrt(a), sqrt(1-a));
+        delta_d = R*c;
+
         delta_h = fabs(Z - prev_Z);
         d += sqrt(delta_d*delta_d + delta_h * delta_h);
         //printf("Dist: %f X: %f Y: %f Z: %f Delta d: %f Delta h: %h\n", d, X, Y, Z, delta_d, delta_h);
@@ -114,8 +125,9 @@ int main (int argc, char *argv[])
         prev_Y = Y;
         prev_Z = Z;
       }
-      total_dist += d;  
-      printf ("  %.1fm\n", d*km_to_miles);
+      total_dist += d;
+      //total_dist += round(d * 10)/10;    
+      printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("when")->getText());
     }
 
     printf ("\n\nTotal distance: %.1f\n", total_dist*km_to_miles);
