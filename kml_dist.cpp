@@ -70,7 +70,7 @@ void readFile(Node *root, FILE* xmlFile);
 
 int main (int argc, char *argv[])
 {
-  Node *root, *currNode;
+  Node *root, *currNode, *gxTrackRoot;
   FILE *input;
   const double R = 6371; // km 
   const double km_to_miles = 0.621371;
@@ -92,9 +92,13 @@ int main (int argc, char *argv[])
       else
         printf("%-65s", "Untitled track");
         
-      if (currNode->getChild("Placemark", i)->getNumChild("gx:Track") == 0) printf("Found no gx:Tracks under Placemark!\n");
-      int m=currNode->getChild("Placemark", i)->getChild("gx:Track")->getNumChild("gx:coord");
-      char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord")->getText());
+      if (currNode->getChild("Placemark", i)->getNumChild("gx:Track") > 0) {
+        gxTrackRoot = currNode->getChild("Placemark", i)->getChild("gx:Track");
+      } else {
+        printf("Found no gx:Tracks under Placemark!\n");
+      }
+      int m=gxTrackRoot->getNumChild("gx:coord");
+      char * coords = strdup(gxTrackRoot->getChild("gx:coord")->getText());
       char *tokenptr=strtok(coords, " ");
       double prev_X=atof(tokenptr);
       double prev_Y=atof(strtok(NULL, " "));
@@ -105,7 +109,7 @@ int main (int argc, char *argv[])
       //printf("Main: first coords %s\n", coords);
       for (int j=2; j<=m; j++) 
       {
-        char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord",j)->getText());
+        char * coords = strdup(gxTrackRoot->getChild("gx:coord",j)->getText());
         //printf("Main: coords %s\n", coords);
         char *tokenptr=strtok(coords, " ");
         double X=atof(tokenptr);
