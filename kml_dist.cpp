@@ -87,7 +87,12 @@ int main (int argc, char *argv[])
     printf("There are %d routes \n", n);
     for (int i=1; i<=n; i++) 
     {
-      printf("%-65s", currNode->getChild("Placemark", i)->getChild("name")->getText());
+      if (currNode->getChild("Placemark", i)->getNumChild("name") > 0) 
+        printf("%-65s", currNode->getChild("Placemark", i)->getChild("name")->getText());
+      else
+        printf("%-65s", "Untitled track");
+        
+      if (currNode->getChild("Placemark", i)->getNumChild("gx:Track") == 0) printf("Found no gx:Tracks under Placemark!\n");
       int m=currNode->getChild("Placemark", i)->getChild("gx:Track")->getNumChild("gx:coord");
       char * coords = strdup(currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("gx:coord")->getText());
       char *tokenptr=strtok(coords, " ");
@@ -127,7 +132,7 @@ int main (int argc, char *argv[])
       }
       total_dist += d;
       //total_dist += round(d * 10)/10;    
-      printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("when")->getText());
+      printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:TimeStamp")->getText());
     }
 
     printf ("\n\nTotal distance: %.1f\n", total_dist*km_to_miles);
