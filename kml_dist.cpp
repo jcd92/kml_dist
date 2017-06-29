@@ -75,6 +75,7 @@ int main (int argc, char *argv[])
   const double R = 6371; // km 
   const double km_to_miles = 0.621371;
   double total_dist = 0;
+  int trackCount = 0;
   
   if ((input = fopen(argv[1], "r")) == NULL)
     printf("File could not be opened\n");
@@ -87,55 +88,74 @@ int main (int argc, char *argv[])
     printf("There are %d routes \n", n);
     for (int i=1; i<=n; i++) 
     {
-      if (currNode->getChild("Placemark", i)->getNumChild("name") > 0) 
+      if (currNode->getChild("Placemark", i)->getNumChild("name") > 0) { 
         printf("%-65s", currNode->getChild("Placemark", i)->getChild("name")->getText());
-      else
-        printf("%-65s", "Untitled track");
-        
-      if (currNode->getChild("Placemark", i)->getNumChild("gx:Track") > 0) {
-        gxTrackRoot = currNode->getChild("Placemark", i)->getChild("gx:Track");
       } else {
-        printf("Found no gx:Tracks under Placemark!\n");
-      }
-      int m=gxTrackRoot->getNumChild("gx:coord");
-      char * coords = strdup(gxTrackRoot->getChild("gx:coord")->getText());
-      char *tokenptr=strtok(coords, " ");
-      double prev_X=atof(tokenptr);
-      double prev_Y=atof(strtok(NULL, " "));
-      double prev_Z=atof(strtok(NULL, " "))/1000;
+        printf("%-65s", "Untitled track");
+      }  
+      
+      if (currNode->getChild("Placemark", i)->getNumChild("gx:Track") > 0) {
+        gxTrackRoot = currNode->getChild("Placemark", i);
+        trackCount = 1;
+	printf(":  Single track");
+      } 
+      else if (currNode->getChild("Placemark", i)->getNumChild("gx:MultiTrack") > 0) {
+        trackCount = currNode->getChild("Placemark", i)->getChild("gx:MultiTrack")->getNumChild("gx:Track");
+ 	printf(":  Multi track with %d gx:Tracks", trackCount);
+       if (trackCount > 0) {
+          gxTrackRoot = currNode->getChild("Placemark", i)->getChild("gx:MultiTrack");
+        } else {
+          printf("\nError: Expected gxTracks as part of MultiTrack, but found none.");
+          return 1;
+        }
+      } else { 
+        printf("\nError: Expected gxTrack under Placemark, but found none."); 
+        return 1;
+      }     
+
       double d = 0.0;
-      double delta_d = 0.0;
-      double delta_h = 0.0;
-      //printf("Main: first coords %s\n", coords);
-      for (int j=2; j<=m; j++) 
-      {
-        char * coords = strdup(gxTrackRoot->getChild("gx:coord",j)->getText());
-        //printf("Main: coords %s\n", coords);
-        char *tokenptr=strtok(coords, " ");
-        double X=atof(tokenptr);
-        double Y=atof(strtok(NULL, " "));
-        double Z=atof(strtok(NULL, " "))/1000;
-        // Spherical Law of Cosines method
-        //delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
+      // Loop over the gxTracks 
+      for (int t=1; t<=trackCount; t++) {
+	printf("\n");
+	int m=gxTrackRoot->getChild("gx:Track",t)->getNumChild("gx:coord");
+	char * coords = strdup(gxTrackRoot->getChild("gx:Track",t)->getChild("gx:coord")->getText());
+	char *tokenptr=strtok(coords, " ");
+	double prev_X=atof(tokenptr);
+	double prev_Y=atof(strtok(NULL, " "));
+	double prev_Z=atof(strtok(NULL, " "))/1000;
+	double delta_d = 0.0;
+	double delta_h = 0.0;
+	//printf("Main: first coords %s\n", coords);
+	for (int j=2; j<=m; j++) 
+	{
+          char * coords = strdup(gxTrackRoot->getChild("gx:Track",t)->getChild("gx:coord",j)->getText());
+          //printf("Main: coords %s\n", coords);
+          char *tokenptr=strtok(coords, " ");
+          double X=atof(tokenptr);
+          double Y=atof(strtok(NULL, " "));
+          double Z=atof(strtok(NULL, " "))/1000;
+          // Spherical Law of Cosines method
+          //delta_d = acos(sin(ConvertToRadians(prev_Y))*sin(ConvertToRadians(Y)) + cos(ConvertToRadians(prev_Y))*cos(ConvertToRadians(Y))* cos(ConvertToRadians(X-prev_X))) * R; 
 
-        // Haversine method (better for smaller distances
-        double th1 = ConvertToRadians(prev_Y);
-        double th2 = ConvertToRadians(Y);
-        double delta_th = ConvertToRadians(Y - prev_Y);
-        double delta_lam = ConvertToRadians(X - prev_X);
-        double a = sin(delta_th/2) * sin(delta_th/2) + cos(th1) * cos(th2) * sin(delta_lam/2) * sin(delta_lam/2);
-        double c = 2*atan2(sqrt(a), sqrt(1-a));
-        delta_d = R*c;
+          // Haversine method (better for smaller distances
+          double th1 = ConvertToRadians(prev_Y);
+          double th2 = ConvertToRadians(Y);
+          double delta_th = ConvertToRadians(Y - prev_Y);
+          double delta_lam = ConvertToRadians(X - prev_X);
+          double a = sin(delta_th/2) * sin(delta_th/2) + cos(th1) * cos(th2) * sin(delta_lam/2) * sin(delta_lam/2);
+          double c = 2*atan2(sqrt(a), sqrt(1-a));
+          delta_d = R*c;
 
-        delta_h = fabs(Z - prev_Z);
-        d += sqrt(delta_d*delta_d + delta_h * delta_h);
-        //printf("Dist: %f X: %f Y: %f Z: %f Delta d: %f Delta h: %h\n", d, X, Y, Z, delta_d, delta_h);
-        prev_X = X;
-        prev_Y = Y;
-        prev_Z = Z;
-      }
-      total_dist += d;
-      //total_dist += round(d * 10)/10;    
+          delta_h = fabs(Z - prev_Z);
+          d += sqrt(delta_d*delta_d + delta_h * delta_h);
+          //printf("Dist: %f X: %f Y: %f Z: %f Delta d: %f Delta h: %h\n", d, X, Y, Z, delta_d, delta_h);
+          prev_X = X;
+          prev_Y = Y;
+          prev_Z = Z;
+	}
+	total_dist += d;
+	//total_dist += round(d * 10)/10;   
+      } // End loop around gxTracks 
       printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:TimeStamp")->getText());
     }
 
