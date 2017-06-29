@@ -156,7 +156,13 @@ int main (int argc, char *argv[])
 	total_dist += d;
 	//total_dist += round(d * 10)/10;   
       } // End loop around gxTracks 
-      printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:TimeStamp")->getText());
+      // Check for newer Placemark-specific timestamp, or fall back to gx-coord time
+      if (currNode->getChild("Placemark", i)->getNumChild("gx:TimeStamp") > 0) 
+        { 
+          printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:TimeStamp")->getText());
+        } else {
+          printf ("  %.1fm  %s\n", d*km_to_miles, currNode->getChild("Placemark", i)->getChild("gx:Track")->getChild("when")->getText());
+        }
     }
 
     printf ("\n\nTotal distance: %.1f\n", total_dist*km_to_miles);
